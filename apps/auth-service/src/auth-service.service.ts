@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,7 +10,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entity/user.entity';
 import * as crypto from 'crypto';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthServiceService {
@@ -17,6 +18,9 @@ export class AuthServiceService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private jwtService: JwtService,
+
+    @Inject('NOTIFICATION_SERVICE') // Inject microservice client
+    private notificationClient: ClientProxy,
   ) {}
 
   async register(email: string, password: string) {
@@ -77,10 +81,19 @@ export class AuthServiceService {
 
     await this.userRepo.save(user);
 
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+
     // Here, you'd normally send the email
     console.log(
       `RESET LINK: http://localhost:3000/reset-password?token=${token}`,
     );
+
+    // 🔔 Send email via notification-service
+    this.notificationClient.emit('send_reset_email', {
+      to: user.email,
+      subject: 'Password Reset Request',
+      token: resetLink,
+    });
 
     return { message: 'Reset link has been sent to email' };
   }

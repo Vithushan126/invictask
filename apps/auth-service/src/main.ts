@@ -13,7 +13,7 @@ async function bootstrap() {
     {
       transport: Transport.TCP, // You can also use NATS, Redis, gRPC, etc.
       options: {
-        port: Number(process.env.PORT),
+        port: Number(process.env.PORT) || 4001,
       },
     },
   );

@@ -18,6 +18,14 @@ import { ConfigModule } from '@nestjs/config';
           port: Number(process.env.AUTH_SERVICE_PORT),
         },
       },
+      {
+        name: 'NOTIFICATION_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: process.env.NOTIFICATION_SERVICE_HOST,
+          port: Number(process.env.NOTIFICATION_SERVICE_PORT),
+        },
+      },
     ]),
   ],
   controllers: [ApiGatewayController],
