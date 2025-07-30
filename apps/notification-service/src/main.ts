@@ -6,17 +6,17 @@ async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     NotificationServiceModule,
     {
-      transport: Transport.TCP,
+      transport: Transport.RMQ,
       options: {
-        host: process.env.NOTIFICATION_SERVICE_HOST,
-        port: Number(process.env.NOTIFICATION_PORT) || 4002,
+        urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+        queue: process.env.RABBITMQ_NOTIFICATION_QUEUE || 'notification_queue',
+        queueOptions: {
+          durable: false,
+        },
       },
     },
   );
   await app.listen();
-  console.log(
-    'Notification service is listening on port',
-    process.env.NOTIFICATION_PORT,
-  );
+  console.log('Notification service is listening with RabbitMQ');
 }
 bootstrap();

@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -19,14 +14,17 @@ export class AuthServiceService {
     private userRepo: Repository<User>,
     private jwtService: JwtService,
 
-    @Inject('NOTIFICATION_SERVICE') // Inject microservice client
+    @Inject('NOTIFICATION_SERVICE') // RabbitMQ client
     private notificationClient: ClientProxy,
   ) {}
 
   async register(email: string, password: string) {
     const exists = await this.userRepo.findOne({ where: { email } });
     if (exists) {
-      throw new RpcException('Email already used');
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Email already used',
+      });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -43,6 +41,7 @@ export class AuthServiceService {
         message: 'Invalid credentials',
       });
     }
+
     const token = await this.jwtService.signAsync({
       id: user.id,
       email: user.email,
@@ -57,13 +56,20 @@ export class AuthServiceService {
     newPassword: string,
   ) {
     const user = await this.userRepo.findOne({ where: { email } });
-    if (!user) throw new RpcException('User not found');
+    if (!user)
+      throw new RpcException({
+        statusCode: 404,
+        message: 'User not found',
+      });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) throw new RpcException('Old password is incorrect');
+    if (!isMatch)
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Old password is incorrect',
+      });
 
-    const hashedNew = await bcrypt.hash(newPassword, 10);
-    user.password = hashedNew;
+    user.password = await bcrypt.hash(newPassword, 10);
     await this.userRepo.save(user);
 
     return { message: 'Password changed successfully' };
@@ -71,42 +77,46 @@ export class AuthServiceService {
 
   async forgotPassword(email: string) {
     const user = await this.userRepo.findOne({ where: { email } });
-    if (!user) throw new RpcException('User not found');
+    if (!user)
+      throw new RpcException({
+        statusCode: 404,
+        message: 'User not found',
+      });
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 1000 * 60 * 15); // 15 mins
 
     user.resetToken = token;
     user.resetTokenExpires = expiry;
-
     await this.userRepo.save(user);
 
     const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
-    // Here, you'd normally send the email
-    console.log(
-      `RESET LINK: http://localhost:3000/reset-password?token=${token}`,
-    );
-
     // 🔔 Send email via notification-service
-    this.notificationClient.emit('send_reset_email', {
-      to: user.email,
-      subject: 'Password Reset Request',
-      token: resetLink,
-    });
+    await this.notificationClient
+      .emit('send_reset_email', {
+        to: user.email,
+        subject: 'Password Reset Request',
+        token: resetLink,
+      })
+      .toPromise();
 
     return { message: 'Reset link has been sent to email' };
   }
 
   async resetPassword(token: string, newPassword: string) {
     const user = await this.userRepo.findOne({ where: { resetToken: token } });
+    console.log(user);
 
     if (
       !user ||
       !user.resetTokenExpires ||
       user.resetTokenExpires < new Date()
     ) {
-      throw new RpcException('Reset token is invalid or expired');
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Reset token is invalid or expired',
+      });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);

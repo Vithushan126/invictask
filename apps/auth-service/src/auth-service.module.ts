@@ -14,6 +14,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       envFilePath: ['.env', 'apps/auth-service/.env'],
       isGlobal: true,
     }),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DATABASE_HOST,
@@ -24,19 +25,25 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       entities: [User],
       synchronize: true,
     }),
+
     TypeOrmModule.forFeature([User]),
+
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
     }),
-    // ✅ Add this to register the NOTIFICATION_SERVICE microservice client
+    
+    // RabbitMQ client for Notification Microservice
     ClientsModule.register([
       {
         name: 'NOTIFICATION_SERVICE',
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: process.env.NOTIFICATION_SERVICE_HOST, // same as in notification-service main.ts
-          port: 4002,
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.NOTIFICATION_QUEUE || 'notification_queue',
+          queueOptions: {
+            durable: false,
+          },
         },
       },
     ]),

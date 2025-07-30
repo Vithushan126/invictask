@@ -4,7 +4,6 @@ import {
   Body,
   Res,
   Inject,
-  UseFilters,
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
@@ -21,19 +20,16 @@ export class ApiGatewayController {
     try {
       return await firstValueFrom(this.authClient.send('register', body));
     } catch (error) {
-      if (error && typeof error === 'object' && 'message' in error) {
-        throw new BadRequestException(error.message);
-      }
-      throw new BadRequestException('Registration failed');
+      this.handleError(error, 'Registration failed');
     }
   }
 
   @Post('login')
   async login(@Body() body: any, @Res() res: Response) {
     try {
-      const { access_token } = await this.authClient
-        .send('login', body)
-        .toPromise();
+      const { access_token } = await firstValueFrom(
+        this.authClient.send('login', body),
+      );
       res
         .cookie('jwt', access_token, {
           httpOnly: true,
@@ -43,12 +39,7 @@ export class ApiGatewayController {
         })
         .send({ message: 'Logged in', access_token });
     } catch (error) {
-      console.log(error);
-
-      if (error && typeof error === 'object' && 'message' in error) {
-        throw new BadRequestException(error.message);
-      }
-      throw new BadRequestException('Login failed');
+      this.handleError(error, 'Login failed');
     }
   }
 
@@ -61,45 +52,43 @@ export class ApiGatewayController {
   @Post('change-password')
   async changePassword(@Body() body: any, @Res() res: Response) {
     try {
-      const result = await this.authClient
-        .send('change_password', body)
-        .toPromise();
+      const result = await firstValueFrom(
+        this.authClient.send('change_password', body),
+      );
       res.status(200).send(result);
     } catch (error) {
-      if (error && typeof error === 'object' && 'message' in error) {
-        throw new BadRequestException(error.message);
-      }
-      throw new BadRequestException('Change password failed');
+      this.handleError(error, 'Change password failed');
     }
   }
 
   @Post('forgot-password')
   async forgotPassword(@Body() body: any, @Res() res: Response) {
     try {
-      const result = await this.authClient
-        .send('forgot_password', body)
-        .toPromise();
+      const result = await firstValueFrom(
+        this.authClient.send('forgot_password', body),
+      );
       res.status(200).send(result);
     } catch (error) {
-      if (error && typeof error === 'object' && 'message' in error) {
-        throw new BadRequestException(error.message);
-      }
-      throw new BadRequestException('Forgot password failed');
+      this.handleError(error, 'Forgot password failed');
     }
   }
 
   @Post('reset-password')
   async resetPassword(@Body() body: any, @Res() res: Response) {
     try {
-      const result = await this.authClient
-        .send('reset_password', body)
-        .toPromise();
+      const result = await firstValueFrom(
+        this.authClient.send('reset_password', body),
+      );
       res.status(200).send(result);
     } catch (error) {
-      if (error && typeof error === 'object' && 'message' in error) {
-        throw new BadRequestException(error.message);
-      }
-      throw new BadRequestException('Reset password failed');
+      this.handleError(error, 'Reset password failed');
     }
+  }
+
+  private handleError(error: any, fallbackMessage: string) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      throw new BadRequestException(error.message);
+    }
+    throw new BadRequestException(fallbackMessage);
   }
 }

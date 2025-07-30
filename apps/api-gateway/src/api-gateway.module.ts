@@ -12,18 +12,24 @@ import { ConfigModule } from '@nestjs/config';
     ClientsModule.register([
       {
         name: 'AUTH_SERVICE',
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: process.env.AUTH_SERVICE_HOST,
-          port: Number(process.env.AUTH_SERVICE_PORT),
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'], // e.g., amqp://localhost:5672
+          queue: 'auth_queue',
+          queueOptions: {
+            durable: false,
+          },
         },
       },
       {
         name: 'NOTIFICATION_SERVICE',
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: process.env.NOTIFICATION_SERVICE_HOST,
-          port: Number(process.env.NOTIFICATION_SERVICE_PORT),
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'notification_queue',
+          queueOptions: {
+            durable: false,
+          },
         },
       },
     ]),
