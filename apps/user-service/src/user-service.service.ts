@@ -27,8 +27,6 @@ export class UserServiceService {
       this.authClient.send({ cmd: 'get_user_by_id' }, data?.userId),
     );
 
-    console.log('user111111111', user);
-
     if (!user)
       throw new RpcException({
         statusCode: 404,
