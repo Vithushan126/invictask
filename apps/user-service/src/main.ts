@@ -11,9 +11,13 @@ async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     UserServiceModule,
     {
-      transport: Transport.TCP, // You can also use NATS, Redis, gRPC, etc.
+      transport: Transport.RMQ, // You can also use NATS, Redis, gRPC, etc.
       options: {
-        port: Number(process.env.PORT) || 4003,
+        urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'], // Replace with your RabbitMQ URL
+        queue: process.env.USER_QUEUE || 'user_queue',
+        queueOptions: {
+          durable: false,
+        },
       },
     },
   );
@@ -36,6 +40,8 @@ async function bootstrap() {
   );
 
   await app.listen();
-  console.log('User microservice is listening on port', process.env.PORT);
+  console.log(
+    'User microservice is connected to RabbitMQ and listening for messages...',
+  );
 }
 bootstrap();

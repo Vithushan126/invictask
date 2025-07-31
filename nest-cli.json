@@ -28,6 +28,24 @@
         "tsConfigPath": "apps/auth-service/tsconfig.app.json"
       }
     },
+    "comment-service": {
+      "type": "application",
+      "root": "apps/comment-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/comment-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/comment-service/tsconfig.app.json"
+      }
+    },
+    "file-service": {
+      "type": "application",
+      "root": "apps/file-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/file-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/file-service/tsconfig.app.json"
+      }
+    },
     "invictask": {
       "type": "application",
       "root": "apps/invictask",
@@ -44,6 +62,33 @@
       "sourceRoot": "apps/notification-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/notification-service/tsconfig.app.json"
+      }
+    },
+    "organization-service": {
+      "type": "application",
+      "root": "apps/organization-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/organization-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/organization-service/tsconfig.app.json"
+      }
+    },
+    "project-service": {
+      "type": "application",
+      "root": "apps/project-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/project-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/project-service/tsconfig.app.json"
+      }
+    },
+    "task-service": {
+      "type": "application",
+      "root": "apps/task-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/task-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/task-service/tsconfig.app.json"
       }
     },
     "user-service": {

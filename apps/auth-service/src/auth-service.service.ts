@@ -47,7 +47,7 @@ export class AuthServiceService {
       email: user.email,
     });
 
-    return { access_token: token };
+    return { access_token: token, user };
   }
 
   async changePassword(
@@ -125,5 +125,9 @@ export class AuthServiceService {
 
     await this.userRepo.save(user);
     return { message: 'Password reset successful' };
+  }
+
+  async getUserById(id: number): Promise<User | null> {
+    return this.userRepo.findOne({ where: { id } });
   }
 }

@@ -39,4 +39,9 @@ export class AuthServiceController {
   resetPassword(@Payload() data: ResetPasswordDto) {
     return this.authServiceService.resetPassword(data.token, data.newPassword);
   }
+
+  @MessagePattern({ cmd: 'get_user_by_id' })
+  async getUserById(@Payload() userId: number) {
+    return this.authServiceService.getUserById(userId);
+  }
 }

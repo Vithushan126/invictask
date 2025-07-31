@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ApiGatewayController } from './api-gateway.controller';
 import { ConfigModule } from '@nestjs/config';
+import { AuthController } from './controlers/auth.controller';
+import { UserController } from './controlers/user.controller';
 
 @Module({
   imports: [
@@ -22,6 +24,17 @@ import { ConfigModule } from '@nestjs/config';
         },
       },
       {
+        name: 'USER_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'], // e.g., amqp://localhost:5672
+          queue: 'user_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+      {
         name: 'NOTIFICATION_SERVICE',
         transport: Transport.RMQ,
         options: {
@@ -32,8 +45,20 @@ import { ConfigModule } from '@nestjs/config';
           },
         },
       },
+      {
+        name: 'FILE_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'file_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
     ]),
   ],
-  controllers: [ApiGatewayController],
+  controllers: [AuthController, UserController],
+  // controllers: [ApiGatewayController],
 })
 export class ApiGatewayModule {}
