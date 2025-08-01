@@ -48,7 +48,7 @@ export class ApiGatewayController {
           secure: false,
           maxAge: 24 * 60 * 60 * 1000,
         })
-        .send({ message: 'Logged in', access_token, user });
+        .send({ message: 'Successfully logged in.', access_token, user });
     } catch (error) {
       this.handleError(error, 'Login failed');
     }

@@ -90,7 +90,7 @@ export class AuthServiceService {
     user.resetTokenExpires = expiry;
     await this.userRepo.save(user);
 
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const resetLink = `http://localhost:3000/new-password?token=${token}`;
 
     // 🔔 Send email via notification-service
     await this.notificationClient
@@ -101,7 +101,9 @@ export class AuthServiceService {
       })
       .toPromise();
 
-    return { message: 'Reset link has been sent to email' };
+    return {
+      message: 'Reset link has been sent to email.Please check your email.',
+    };
   }
 
   async resetPassword(token: string, newPassword: string) {
