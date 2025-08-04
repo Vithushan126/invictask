@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ApiGatewayController } from './api-gateway.controller';
 import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './controlers/auth.controller';
 import { UserController } from './controlers/user.controller';
+import { OrganizationController } from './controlers/org.controler';
 
 @Module({
   imports: [
@@ -46,6 +46,17 @@ import { UserController } from './controlers/user.controller';
         },
       },
       {
+        name: 'ORGANIZATION_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'org_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+      {
         name: 'FILE_SERVICE',
         transport: Transport.RMQ,
         options: {
@@ -58,7 +69,6 @@ import { UserController } from './controlers/user.controller';
       },
     ]),
   ],
-  controllers: [AuthController, UserController],
-  // controllers: [ApiGatewayController],
+  controllers: [AuthController, UserController, OrganizationController],
 })
 export class ApiGatewayModule {}

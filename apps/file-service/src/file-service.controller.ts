@@ -10,7 +10,7 @@ import { ReplaceFileDto } from './dto/replace-file.dto';
 export class FileServiceController {
   constructor(private readonly fileServiceService: FileServiceService) {}
 
-  @MessagePattern({ cmd: 'upload_file' })
+  @MessagePattern('upload_file')
   async uploadFile(data: UploadFileDto) {
     console.log('dataaaaaaaaaa', data);
 

@@ -29,9 +29,6 @@ export class UserController {
     @Body() userData: any,
   ) {
     try {
-      console.log('userData', userData);
-      console.log('fileqqqqqqqqqqqqqqq', file);
-
       const payload = {
         user: userData,
         file: file

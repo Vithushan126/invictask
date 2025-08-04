@@ -24,7 +24,7 @@ export class UserServiceService {
 
   async create(data: CreateUserDto, file?: Express.Multer.File) {
     const user: User | null = await firstValueFrom(
-      this.authClient.send({ cmd: 'get_user_by_id' }, data?.userId),
+      this.authClient.send('get_user_by_id', data?.userId),
     );
 
     if (!user)
@@ -97,16 +97,14 @@ export class UserServiceService {
     };
 
     const result = await firstValueFrom(
-      this.fileClient.send({ cmd: 'upload_file' }, payload),
+      this.fileClient.send('upload_file', payload),
     );
 
     return result?.secure_url || result?.url || '';
   }
 
   private async deleteFromFileService(publicId: string) {
-    await firstValueFrom(
-      this.fileClient.send({ cmd: 'delete_file' }, publicId),
-    );
+    await firstValueFrom(this.fileClient.send('delete_file', publicId));
   }
 
   private extractPublicId(url: string): string {
