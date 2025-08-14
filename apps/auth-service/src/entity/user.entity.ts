@@ -11,6 +11,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ default: 'member' })
+  role: 'owner' | 'member';
+
   @Column({ nullable: true, type: 'varchar' })
   resetToken?: string | null;
 

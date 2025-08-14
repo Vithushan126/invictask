@@ -3,7 +3,7 @@ import { OrganizationServiceService } from './organization-service.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
-import { AddTeamMemberDto } from './dto/add-team-member.dto';
+import { AddTeamMembersDto } from './dto/add-team-member.dto';
 
 @Controller()
 export class OrganizationServiceController {
@@ -12,6 +12,11 @@ export class OrganizationServiceController {
   @MessagePattern('create_organization')
   createOrg(@Payload() payload: CreateOrganizationDto) {
     return this.orgService.createOrganization(payload);
+  }
+
+  @MessagePattern('get_all_organizations')
+  getAllOrganizations() {
+    return this.orgService.getAllOrganizations();
   }
 
   @MessagePattern('add_organization_member')
@@ -35,8 +40,10 @@ export class OrganizationServiceController {
   }
 
   @MessagePattern('add_team_member')
-  addTeamMember(@Payload() data: AddTeamMemberDto) {
-    return this.orgService.addTeamMember(data);
+  async addTeamMember(
+    @Payload() data: { teamId: string; members: AddTeamMembersDto['members'] },
+  ) {
+    return this.orgService.addTeamMember(data.teamId, data.members);
   }
 
   @MessagePattern('get_team_members')

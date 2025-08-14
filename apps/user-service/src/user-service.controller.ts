@@ -10,8 +10,6 @@ export class UserServiceController {
 
   @MessagePattern('user_create')
   create(@Payload() data: any) {
-    console.log('data', data);
-
     return this.userServiceService.create(data.user, data.file);
   }
 

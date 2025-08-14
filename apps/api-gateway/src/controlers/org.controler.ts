@@ -35,6 +35,13 @@ export class OrganizationController {
     }
   }
 
+  @Get('/get-all')
+  async getAllOrganizations() {
+    return await firstValueFrom(
+      this.orgClient.send('get_all_organizations', {}),
+    );
+  }
+
   @Post('/members/:id')
   async addMember(@Param('id') orgId: string, @Body() body: any) {
     try {
@@ -84,7 +91,7 @@ export class OrganizationController {
     }
   }
 
-  @Post('/teams:id')
+  @Post('/teams/:id')
   async createTeam(@Param('id') orgId: string, @Body() body: any) {
     try {
       const payload = { organizationId: orgId, ...body };
@@ -102,7 +109,7 @@ export class OrganizationController {
   }
 
   @Post('teams/members/:teamId')
-  async addTeamMember(@Param('teamId') teamId: string, @Body() body: any) {
+  async addTeamMembers(@Param('teamId') teamId: string, @Body() body: any) {
     try {
       const payload = { teamId, ...body };
       const response = await firstValueFrom(
@@ -110,15 +117,15 @@ export class OrganizationController {
       );
       return response;
     } catch (err) {
-      console.error('Error adding team member:', err);
+      console.error('Error adding team members:', err);
       throw new HttpException(
-        err?.message || 'Failed to add team member',
+        err?.message || 'Failed to add team members',
         err?.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  @Get('teams/members/teamId')
+  @Get('teams/members/:teamId')
   async getTeamMembers(@Param('teamId') teamId: string) {
     try {
       const response = await firstValueFrom(

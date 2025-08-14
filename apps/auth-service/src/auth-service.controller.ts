@@ -40,8 +40,9 @@ export class AuthServiceController {
     return this.authServiceService.resetPassword(data.token, data.newPassword);
   }
 
-  @MessagePattern( 'get_user_by_id' )
-  async getUserById(@Payload() userId: number) {
+  @MessagePattern('get_user_by_id')
+  async getUserById(@Payload() payload: { userId: number }) {
+    const { userId } = payload;
     return this.authServiceService.getUserById(userId);
   }
 }

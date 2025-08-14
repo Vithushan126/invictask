@@ -6,7 +6,7 @@ import { OrganizationMember } from './entity/organization-member.entity';
 import { Team } from './entity/team.entity';
 import { Invitation } from './entity/invitation.entity';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { AddTeamMemberDto } from './dto/add-team-member.dto';
+import { AddTeamMembersDto } from './dto/add-team-member.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { TeamMember } from './entity/team-member.entity';
 import { InviteMemberDto } from './dto/invite-member.dto';
@@ -52,8 +52,39 @@ export class OrganizationServiceService {
     return savedOrg;
   }
 
+  //get all organizations
+  async getAllOrganizations() {
+    try {
+      const organizations = await this.orgRepo.find({
+        relations: ['members', 'teams'],
+      });
+
+      if (!organizations || organizations.length === 0) {
+        throw new RpcException({
+          statusCode: 404,
+          message: 'No organizations found.',
+        });
+      }
+
+      return organizations;
+    } catch (error) {
+      // If already RpcException, rethrow it
+      if (error instanceof RpcException) {
+        throw error;
+      }
+
+      // Unexpected error
+      throw new RpcException({
+        statusCode: 500,
+        message: error.message || 'Failed to fetch organizations.',
+      });
+    }
+  }
+
   // Add member to organization, check duplicates
   async addMember(data) {
+    console.log('data', data);
+
     const org = await this.orgRepo.findOne({
       where: { id: data.organizationId },
     });
@@ -64,10 +95,12 @@ export class OrganizationServiceService {
         message: 'Organization not found.',
       });
 
-    const userExists = await this.userClient
+    const userExists = await this.authClient
       .send('get_user_by_id', { userId: data.userId })
       .toPromise()
       .catch(() => false);
+
+    console.log('userExists', userExists);
 
     if (!userExists) {
       throw new RpcException({
@@ -149,8 +182,8 @@ export class OrganizationServiceService {
     return this.teamRepo.save(team);
   }
 
-  async addTeamMember(data: AddTeamMemberDto) {
-    const team = await this.teamRepo.findOne({ where: { id: data.teamId } });
+  async addTeamMember(teamId: string, members: AddTeamMembersDto['members']) {
+    const team = await this.teamRepo.findOne({ where: { id: teamId } });
     if (!team) {
       throw new RpcException({
         statusCode: 404,
@@ -158,48 +191,48 @@ export class OrganizationServiceService {
       });
     }
 
-    // Check if user is already a member of the team
-    const existingMember = await this.teamMemberRepo.findOne({
-      where: {
-        teamId: data.teamId,
-        userId: data.userId,
-      },
-    });
+    const results: { userId: string; status: string }[] = [];
 
-    if (existingMember) {
-      throw new RpcException({
-        statusCode: 409,
-        message: 'User is already a member of this team.',
+    for (const member of members) {
+      // Check if user is already a member
+      const existingMember = await this.teamMemberRepo.findOne({
+        where: { teamId, userId: member.userId },
       });
+
+      if (existingMember) {
+        results.push({ userId: member.userId, status: 'already_member' });
+        continue;
+      }
+
+      // Optional: Check if user exists via USER_SERVICE
+      let userExists = false;
+      try {
+        userExists = await this.authClient
+          .send('get_user_by_id', { userId: member.userId })
+          .toPromise();
+      } catch (err) {
+        throw new RpcException({
+          statusCode: 500,
+          message: `Failed to verify user ${member.userId} via user service.`,
+        });
+      }
+
+      if (!userExists) {
+        results.push({ userId: member.userId, status: 'user_not_found' });
+        continue;
+      }
+
+      const teamMember = this.teamMemberRepo.create({
+        teamId,
+        userId: member.userId,
+        role: member.role ?? 'member',
+      });
+
+      await this.teamMemberRepo.save(teamMember);
+      results.push({ userId: member.userId, status: 'added' });
     }
 
-    // Optional: Check if user exists via USER_SERVICE
-    let userExists = false;
-    try {
-      userExists = await this.userClient
-        .send('get_user_by_id', { userId: data.userId })
-        .toPromise();
-    } catch (err) {
-      throw new RpcException({
-        statusCode: 500,
-        message: 'Failed to verify user existence via user service.',
-      });
-    }
-
-    if (!userExists) {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'User does not exist.',
-      });
-    }
-
-    const teamMember = this.teamMemberRepo.create({
-      teamId: data.teamId,
-      userId: data.userId,
-      role: data.role ?? 'member',
-    });
-
-    return this.teamMemberRepo.save(teamMember);
+    return results;
   }
 
   async getTeamMembers(teamId: string) {
